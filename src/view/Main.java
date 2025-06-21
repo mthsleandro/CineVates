@@ -57,8 +57,10 @@ public class Main {
 
                 boolean verif = true;
                 if (Entrada.leiaBoolean("Deseja ver todos os filmes disponíveis?")) {
-                    vetAux = vetFilmes;
+                    // imprime todos os filmes
+                    vetAux = vetFilmes; 
                 } else {
+                    // imprime os filmes do horário selecionado
                     Double hora = Entrada.leiaDouble("Informe o horário desejado");
                     vetAux = new String[vetFilmes.length];
                     Double horaAux;
@@ -159,7 +161,7 @@ public class Main {
 
                 int numeroFilme = Entrada.leiaInt("Digite o número do filme que quer excluir");
                 if (achaNoVetor(vetFilmes, numeroFilme)) {
-
+                    // valida se existe ingressos com esse filme e pergunta se deseja cancelar
                     String[] vetIngressos = new String[contaLinhas(ingressos)];
                     atualizaVetor(vetIngressos, ingressos);
                     boolean temIngresso = false;
@@ -174,10 +176,12 @@ public class Main {
                     if (temIngresso) {
                         boolean continuar = Entrada.leiaBoolean("Há ingressos associados a este filme. Deseja cancelá-los e continuar?");
                         if (!continuar) {
+                            // mantém ingressos, mesmo que o filme seja excluído
                             mensagem = msgPadrao;
                             continue;
                         }
 
+                       // cancela ingressos
                         ingressos.abrirEscrita(false);
                         for (String ing : vetIngressos) {
                             if (!piece(ing, ",", 1).equals(String.valueOf(numeroFilme))) {
