@@ -48,8 +48,13 @@ public class Main {
             while (!validaOpcao(vetMenu, input)) {
                 input = Entrada.leiaString("Informe uma opção válida");
             }
-            opcao = Integer.parseInt(input);
 
+            filmes = new Arquivo("filmes.txt");
+            salas = new Arquivo("salas.txt");
+            ingressos = new Arquivo("ingressos.txt");
+            copia = new Arquivo("copia.txt");
+
+            opcao = Integer.parseInt(input);
             if (opcao == 1) { // Consultar filmes
                 String[] vetAux;
                 String[] vetFilmes = new String[contaLinhas(filmes)];
@@ -58,7 +63,7 @@ public class Main {
                 boolean verif = true;
                 if (Entrada.leiaBoolean("Deseja ver todos os filmes disponíveis?")) {
                     // imprime todos os filmes
-                    vetAux = vetFilmes; 
+                    vetAux = vetFilmes;
                 } else {
                     // imprime os filmes do horário selecionado
                     Double hora = Entrada.leiaDouble("Informe o horário desejado");
@@ -70,13 +75,19 @@ public class Main {
                         parte = piece(vetFilmes[i], ",", POS_HOR);
                         try {
                             horaAux = Double.valueOf(parte);
-                            if (horaAux >= hora) {
+                            if (horaAux == hora) {
                                 vetAux[i] = vetFilmes[i];
                             }
                         } catch (NumberFormatException ex) {
                             System.err.println("Ocorreu um erro ao buscar o horário do filme.");
                             verif = false;
                         }
+                    }
+
+                    if (vetAux.length <= 0) {
+                        System.out.println("Não foi encontrado nenhum filme neste horário.");
+                        mensagem = msgPadrao;
+                        continue;
                     }
                 }
 
@@ -90,6 +101,7 @@ public class Main {
                 String[] vetor = new String[10];
                 String nome;
                 int horario;
+                int sala;
                 int classificacao;
                 double valor;
                 int x = 0;
@@ -124,10 +136,23 @@ public class Main {
                 while (verif == true) {
                     nome = Entrada.leiaString("Digite o nome do filme");
                     horario = Entrada.leiaInt("Digie o horário que irá começar o filme");
+
+                    String[] vetSalas = new String[contaLinhas(salas)];
+                    atualizaVetor(vetSalas, salas);
+
+                    String msg = "Digite a sala que irá apresentar o filme";
+                    while (true) {
+                        sala = Entrada.leiaInt(msg);
+                        if (achaNoVetor(vetSalas, sala, "#")) {
+                            break;
+                        }
+                        msg = "Informe uma sala válida.";
+                    }
+
                     classificacao = Entrada.leiaInt("Digite a classificação mínima para assistir filme");
                     valor = Entrada.leiaDouble("Digite o valor que será cobrado por ingresso");
 
-                    vetor[x] = x + "," + nome + "," + horario + "," + classificacao + "," + valor;
+                    vetor[x] = x + "," + nome + "," + horario + "," + sala + "," + classificacao + "," + valor;
                     x++;
 
                     if (x > vetor.length - 1) {
@@ -149,7 +174,7 @@ public class Main {
                 atualizaVetor(vetFilmes, filmes);
 
                 int numeroFilme = Entrada.leiaInt("Digite o número do filme que quer editar");
-                if (achaNoVetor(vetFilmes, numeroFilme)) {
+                if (achaNoVetor(vetFilmes, numeroFilme, ",")) {
                     editarFilme(filmes, numeroFilme, copia);
                 } else {
                     System.err.println("Filme não encontrado.");
@@ -160,7 +185,7 @@ public class Main {
                 atualizaVetor(vetFilmes, filmes);
 
                 int numeroFilme = Entrada.leiaInt("Digite o número do filme que quer excluir");
-                if (achaNoVetor(vetFilmes, numeroFilme)) {
+                if (achaNoVetor(vetFilmes, numeroFilme, ",")) {
                     // valida se existe ingressos com esse filme e pergunta se deseja cancelar
                     String[] vetIngressos = new String[contaLinhas(ingressos)];
                     atualizaVetor(vetIngressos, ingressos);
@@ -181,7 +206,7 @@ public class Main {
                             continue;
                         }
 
-                       // cancela ingressos
+                        // cancela ingressos
                         ingressos.abrirEscrita(false);
                         for (String ing : vetIngressos) {
                             if (!piece(ing, ",", 1).equals(String.valueOf(numeroFilme))) {
@@ -322,7 +347,7 @@ public class Main {
                 atualizaVetor(vetIngressos, ingressos);
 
                 int numeroIng = Entrada.leiaInt("Digite o número do ingresso que deseja cancelar");
-                if (achaNoVetor(vetIngressos, numeroIng)) {
+                if (achaNoVetor(vetIngressos, numeroIng, ",")) {
                     cancelarIngresso(ingressos, numeroIng, copia);
                 } else {
                     System.err.println("Ingresso não encontrado.");
@@ -345,7 +370,7 @@ public class Main {
                 atualizaVetor(vetSalas, salas);
 
                 int numeroSala = Entrada.leiaInt("Digite o número da sala que deseja editar");
-                if (achaNoVetor(vetSalas, numeroSala)) {
+                if (achaNoVetor(vetSalas, numeroSala, "#")) {
                     editarSala(salas, numeroSala, copia);
                 } else {
                     System.err.println("Sala não encontrada.");
@@ -356,8 +381,7 @@ public class Main {
                 atualizaVetor(vetSalas, salas);
 
                 int numeroSala = Entrada.leiaInt("Digite o número da sala que quer excluir");
-                if (achaNoVetor(vetSalas, numeroSala)) {
-
+                if (achaNoVetor(vetSalas, numeroSala, "#")) {
                     String[] vetIngressos = new String[contaLinhas(ingressos)];
                     atualizaVetor(vetIngressos, ingressos);
                     boolean temIngresso = false;
@@ -406,7 +430,7 @@ public class Main {
                     }
 
                     try {
-                        aux = Integer.parseInt(piece(linha, ",", 0));
+                        aux = Integer.parseInt(piece(linha, "#", 0));
                         if (codSalaConsulta == aux) {
                             vetAux[0] = vetSalas[i];
                             break;
@@ -448,6 +472,9 @@ public class Main {
         arq.fecharArquivo();
         arq.abrirLeitura();
 
+        copia.fecharArquivo();
+        copia.abrirEscrita();
+
         boolean editou = false;
         String linha = arq.lerLinha();
         while (linha != null) {
@@ -456,9 +483,10 @@ public class Main {
                 if (cod == codEditar) {
                     String nome = Entrada.leiaString("Novo nome do filme:");
                     int horario = Entrada.leiaInt("Novo horário:");
+                    String sala = Entrada.leiaString("Nova sala:");
                     int classificacao = Entrada.leiaInt("Nova classificação:");
                     double valor = Entrada.leiaDouble("Novo valor:");
-                    copia.escreverLinha(cod + "," + nome + "," + horario + "," + classificacao + "," + valor);
+                    copia.escreverLinha(cod + "," + nome + "," + horario + "," + sala + "," + classificacao + "," + valor);
                     editou = true;
                 } else {
                     copia.escreverLinha(linha);
@@ -486,12 +514,17 @@ public class Main {
         arq.fecharArquivo();
         arq.abrirLeitura();
 
+        copia.fecharArquivo();
+        copia.abrirEscrita();
+
         boolean excluiu = false;
         String linha = arq.lerLinha();
         while (linha != null) {
             try {
                 int cod = Integer.parseInt(piece(linha, ",", 0));
-                if (cod != codExcluir) {
+                if (cod == codExcluir) {
+                    excluiu = true;
+                } else {
                     copia.escreverLinha(linha);
                 }
             } catch (NumberFormatException ex) {
@@ -517,12 +550,17 @@ public class Main {
         arq.fecharArquivo();
         arq.abrirLeitura();
 
+        copia.fecharArquivo();
+        copia.abrirEscrita();
+
         boolean excluiu = false;
         String linha = arq.lerLinha();
         while (linha != null) {
             try {
                 int cod = Integer.parseInt(piece(linha, ",", 0));
-                if (cod != codExcluir) {
+                if (cod == codExcluir) {
+                    excluiu = true;
+                } else {
                     copia.escreverLinha(linha);
                 }
             } catch (NumberFormatException ex) {
@@ -547,6 +585,9 @@ public class Main {
     private static void editarSala(Arquivo arq, int codEditar, Arquivo copia) {
         arq.fecharArquivo();
         arq.abrirLeitura();
+
+        copia.fecharArquivo();
+        copia.abrirEscrita();
 
         boolean editou = false;
         String linha = arq.lerLinha();
@@ -586,12 +627,17 @@ public class Main {
         arq.fecharArquivo();
         arq.abrirLeitura();
 
+        copia.fecharArquivo();
+        copia.abrirEscrita();
+
         boolean excluiu = false;
         String linha = arq.lerLinha();
         while (linha != null) {
             try {
                 int cod = Integer.parseInt(piece(linha, "#", 0));
-                if (cod != codExcluir) {
+                if (cod == codExcluir) {
+                    excluiu = true;
+                } else {
                     copia.escreverLinha(linha);
                 }
             } catch (NumberFormatException ex) {
@@ -613,7 +659,7 @@ public class Main {
         }
     }
 
-    private static boolean achaNoVetor(String[] vetor, int cod) {
+    private static boolean achaNoVetor(String[] vetor, int cod, String delim) {
         int aux;
         String linha;
         for (int i = 0; i < vetor.length; i++) {
@@ -623,7 +669,7 @@ public class Main {
             }
 
             try {
-                aux = Integer.parseInt(piece(linha, ",", 0));
+                aux = Integer.parseInt(piece(linha, delim, 0));
                 if (cod == aux) {
                     return true;
                 }
@@ -698,6 +744,7 @@ public class Main {
 
     private static void imprimirFilmes(String[] vetor) {
         if (vetor.length <= 0) {
+            System.out.println("Nenhum filme no catálogo.");
             return;
         }
 
@@ -714,8 +761,9 @@ public class Main {
             String cod = piece(linha, ",", 0);
             String nome = piece(linha, ",", 1);
             String horario = piece(linha, ",", 2);
-            String classificacao = piece(linha, ",", 3);
-            String valor = piece(linha, ",", 4);
+            String sala = piece(linha, ",", 3);
+            String classificacao = piece(linha, ",", 4);
+            String valor = piece(linha, ",", 5);
 
             try {
                 LocalTime horaFormatada = LocalTime.parse(horario);
@@ -736,12 +784,13 @@ public class Main {
                 classificacao = "Livre";
             }
 
-            System.out.println("Filme " + cod + " | Nome: " + nome + " | Horário: " + horario + " | Classificação: " + classificacao + " | " + valor);
+            System.out.println("Filme " + cod + " | Nome: " + nome + " | Horário: " + horario + "h Sala: " + sala + " | Classificação: " + classificacao + " | " + valor);
         }
     }
 
     private static void imprimirSalas(String[] vetor) {
         if (vetor.length <= 0) {
+            System.out.println("Nenhuma salas no catálogo.");
             return;
         }
 
